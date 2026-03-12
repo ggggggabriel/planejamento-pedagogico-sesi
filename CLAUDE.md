@@ -35,7 +35,5 @@ The app runs at `http://localhost:5000` in debug mode.
 
 ## Known Issues / Design Notes
 
-- `inserir_texto_no_modelo()` appends data as new paragraphs to the end of the template document rather than replacing placeholders inside it — generated files accumulate the template content plus appended fields.
-- The root `app.py` is identical to `teste_plan_web/app.py` and appears to be a leftover copy.
 - Generated `.docx` files accumulate in `static/docx/` and are not cleaned up automatically.
 - The `success.html` template exists but is never rendered.

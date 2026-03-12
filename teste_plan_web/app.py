@@ -39,10 +39,10 @@ def create_plan():
         caminho_arquivo = inserir_texto_no_modelo({
             'Unidade': unidade,
             'Professor': professor,
-            'Séri':serie,
+            'Série': serie,
             'Bimestre': bimestre,
             'Período': periodo,
-            'a':a,
+            'Período Fim': a,
             'Capítulo': capitulo,
             'Área ou Disciplina': disciplina,
             'Habilidades': '\n'.join(habilidades),
@@ -70,15 +70,22 @@ def get_habilidades():
 
 def inserir_texto_no_modelo(dados, modelo_path, pasta_salvar, nome_arquivo):
     try:
-        # Certificar-se de que a pasta para salvar o arquivo existe
         if not os.path.exists(pasta_salvar):
             os.makedirs(pasta_salvar)
 
-        modelo = Document(modelo_path)
+        doc = Document(modelo_path)
+
+        table = doc.add_table(rows=0, cols=2)
+        table.style = 'Table Grid'
+
         for chave, valor in dados.items():
-            modelo.add_paragraph(f'{chave}: {valor}')
+            row = table.add_row()
+            label_run = row.cells[0].paragraphs[0].add_run(chave)
+            label_run.bold = True
+            row.cells[1].paragraphs[0].add_run(str(valor))
+
         caminho_arquivo = os.path.join(pasta_salvar, f'{nome_arquivo}.docx')
-        modelo.save(caminho_arquivo)
+        doc.save(caminho_arquivo)
         return caminho_arquivo
     except Exception as e:
         print(f"Erro ao inserir texto no modelo: {e}")
