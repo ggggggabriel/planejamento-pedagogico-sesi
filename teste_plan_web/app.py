@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, send_file
-from docx import Document
+from docxtpl import DocxTemplate
 from werkzeug.utils import secure_filename
 import pandas as pd
 import io
@@ -40,20 +40,20 @@ def create_plan():
         nome_arquivo = secure_filename(request.form.get('nome_arquivo', 'plano')) or 'plano'
 
         buffer = inserir_texto_no_modelo({
-            'Unidade': unidade,
-            'Professor': professor,
-            'Série': serie,
-            'Bimestre': bimestre,
-            'Período': periodo,
-            'Período Fim': a,
-            'Capítulo': capitulo,
-            'Área ou Disciplina': disciplina,
-            'Habilidades': habilidades,
-            'Desenvolvimento da Aula': desenvolvimento,
-            'Estratégia': estrategia,
-            'Observações': observacoes,
-            'Duração da Aula': duracao_aula
-        }, 'static/docx/Folha do Planejamento Pedagógico.docx')
+            'unidade': unidade,
+            'professor': professor,
+            'serie': serie,
+            'bimestre': bimestre,
+            'periodo': periodo,
+            'periodo_fim': a,
+            'capitulo': capitulo,
+            'disciplina': disciplina,
+            'habilidades': habilidades,
+            'desenvolvimento': desenvolvimento,
+            'estrategia': estrategia,
+            'observacoes': observacoes,
+            'duracao_aula': duracao_aula
+        }, 'static/docx/template_planejamento.docx')
 
         if buffer:
             return send_file(
@@ -77,19 +77,10 @@ def get_habilidades():
 
 def inserir_texto_no_modelo(dados, modelo_path):
     try:
-        doc = Document(modelo_path)
-
-        table = doc.add_table(rows=0, cols=2)
-        table.style = 'Table Grid'
-
-        for chave, valor in dados.items():
-            row = table.add_row()
-            label_run = row.cells[0].paragraphs[0].add_run(chave)
-            label_run.bold = True
-            row.cells[1].paragraphs[0].add_run(str(valor))
-
+        tpl = DocxTemplate(modelo_path)
+        tpl.render(dados)
         buffer = io.BytesIO()
-        doc.save(buffer)
+        tpl.save(buffer)
         buffer.seek(0)
         return buffer
     except Exception as e:
