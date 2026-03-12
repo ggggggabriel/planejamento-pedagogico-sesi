@@ -1,0 +1,38 @@
+# Node
+node_modules/
+npm-debug.log*
+dist/
+
+# Angular
+frontend/.angular/
+frontend/dist/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Env
+.env
+*.env
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# Prisma
+backend/node_modules/

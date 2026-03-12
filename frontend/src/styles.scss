@@ -1,0 +1,29 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$primary: mat.define-palette(mat.$blue-palette, 700);
+$accent: mat.define-palette(mat.$orange-palette, 600);
+$theme: mat.define-light-theme((
+  color: (primary: $primary, accent: $accent)
+));
+
+@include mat.all-component-themes($theme);
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Roboto, sans-serif;
+  background: #f5f5f5;
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.full-width { width: 100%; }
+
+mat-card { margin-bottom: 16px; }

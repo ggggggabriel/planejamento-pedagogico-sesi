@@ -4,36 +4,93 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-A Flask web application for SESI (Serviço Social da Indústria) teachers to fill out and download pedagogical planning forms as `.docx` files. Teachers select a discipline, pick skills from a dynamically loaded list, fill in lesson details, and download a pre-filled Word document.
+Full-stack web application for SESI teachers to create and download pedagogical planning documents (.docx).
 
-## Running the App
+**Stack:** Node.js/Express + Angular 19 + MySQL 8 + Docker + Nginx
 
-The active application lives in `teste_plan_web/`. The root `app.py` is a duplicate.
+## Branch Strategy
+
+| Branch | Purpose |
+|---|---|
+| `main` | Production — triggers auto-deploy via GitHub Actions |
+| `develop` | Integration branch — all features merge here first |
+| `feature/*` | Individual feature branches |
+
+Always branch from `develop`, open PRs to `develop`. Only `develop → main` for releases.
+
+## Running in Development
 
 ```bash
-cd teste_plan_web
-pip install flask python-docx pandas openpyxl
-python app.py
+cp .env.example .env          # fill in secrets
+docker compose up -d          # starts mysql, backend, frontend, nginx
 ```
 
-The app runs at `http://localhost:5000` in debug mode.
+Services:
+- Frontend: http://localhost:4200 (or http://localhost via nginx)
+- Backend: http://localhost:3000
+- MySQL: localhost:3306
 
-## Architecture
+First run only:
+```bash
+docker compose exec backend npm run db:migrate
+docker compose exec backend npm run db:seed
+```
 
-**Data flow:**
-1. `HABILIDADES FUND.xlsx` — Excel file loaded at startup via pandas. Each column is a discipline; rows are skills (habilidades). This is the sole data source.
-2. `/get-habilidades?disciplina=<name>` — AJAX endpoint called by `form.html` when the user changes the discipline dropdown. Returns a JSON list of skills for that column.
-3. `/create-plan` POST — collects form data, calls `inserir_texto_no_modelo()`, which opens `static/docx/Folha do Planejamento Pedagógico.docx` as a base template, appends each field as a new paragraph, saves to `static/docx/<nome_arquivo>.docx`, and serves it as a download.
+Default credentials after seed: `admin@sesi.com.br` / `admin123`, `professor@sesi.com.br` / `prof123`
 
-**Key paths (relative to `teste_plan_web/`):**
-- `HABILIDADES FUND.xlsx` — skill data, must be present at startup
-- `static/docx/Folha do Planejamento Pedagógico.docx` — Word template used as base for every generated plan
-- `static/docx/` — output directory for generated `.docx` files
-- `templates/index.html` — landing page
-- `templates/form.html` — planning form with JS for dynamic skill loading
-- `templates/success.html` — empty placeholder (unused)
+## Backend (`backend/`)
 
-## Known Issues / Design Notes
+**Run commands:**
+```bash
+npm run dev          # nodemon dev server
+npm run db:migrate   # run Prisma migrations
+npm run db:seed      # seed disciplines and default users
+npm run db:generate  # regenerate Prisma client after schema changes
+```
 
-- Generated `.docx` files accumulate in `static/docx/` and are not cleaned up automatically.
-- The `success.html` template exists but is never rendered.
+**Key files:**
+- `src/app.js` — Express app, route mounting
+- `src/server.js` — HTTP server entry point
+- `src/routes/` — auth, disciplinas, planejamentos
+- `src/middleware/auth.middleware.js` — JWT validation
+- `src/services/docx.service.js` — .docx generation with `docx` npm library
+- `prisma/schema.prisma` — DB schema (Usuario, Disciplina, Habilidade, Planejamento)
+- `prisma/seed.js` — seeds disciplines and default users
+
+**Auth:** JWT Bearer tokens. Protected routes require `Authorization: Bearer <token>` header.
+
+**Roles:** PROFESSOR (own planejamentos only), COORDENADOR/ADMIN (all planejamentos).
+
+## Frontend (`frontend/`)
+
+**Run commands:**
+```bash
+npm start    # ng serve on port 4200
+npm run build  # production build → dist/
+```
+
+**Architecture:** Angular 19 standalone components, lazy-loaded routes.
+
+- `src/app/auth/login/` — login screen
+- `src/app/planejamento/form/` — planning form with dynamic skill loading
+- `src/app/historico/` — teacher's planning history
+- `src/app/dashboard/` — coordinator view (all planejamentos)
+- `src/app/core/services/auth.service.ts` — JWT login/logout, localStorage
+- `src/app/core/services/planejamento.service.ts` — API calls
+- `src/app/core/interceptors/auth.interceptor.ts` — attaches Bearer token to all requests
+- `src/app/core/guards/auth.guard.ts` — redirects unauthenticated users to /login
+- `src/environments/` — `apiUrl` differs between dev (localhost:3000) and prod (/api)
+
+## Infrastructure
+
+- `docker-compose.yml` — dev (with volume mounts for hot reload)
+- `docker-compose.prod.yml` — prod (no volume mounts, optimized builds)
+- `nginx/nginx.dev.conf` — proxies `/api/*` to backend, `/` to frontend dev server
+- `nginx/nginx.prod.conf` — same but with SSL termination; replace `yourdomain` with actual domain
+- `.github/workflows/ci.yml` — runs on every PR: backend syntax check + frontend build
+- `.github/workflows/deploy.yml` — runs on push to `main`: SSH deploy via `appleboy/ssh-action`
+- `deploy.sh` — manual deploy script for Ubuntu server
+
+## Legacy
+
+`legacy/` preserves the original Flask implementation for reference.

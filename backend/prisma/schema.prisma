@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Perfil {
+  PROFESSOR
+  COORDENADOR
+  ADMIN
+}
+
+model Usuario {
+  id            Int            @id @default(autoincrement())
+  nome          String
+  email         String         @unique
+  senha         String
+  perfil        Perfil         @default(PROFESSOR)
+  createdAt     DateTime       @default(now())
+  planejamentos Planejamento[]
+}
+
+model Disciplina {
+  id            Int            @id @default(autoincrement())
+  nome          String         @unique
+  habilidades   Habilidade[]
+  planejamentos Planejamento[]
+}
+
+model Habilidade {
+  id           Int        @id @default(autoincrement())
+  descricao    String     @db.Text
+  disciplinaId Int
+  disciplina   Disciplina @relation(fields: [disciplinaId], references: [id])
+}
+
+model Planejamento {
+  id              Int        @id @default(autoincrement())
+  unidade         String
+  serie           String
+  bimestre        String
+  periodo         String
+  periodoFim      String
+  capitulo        String
+  habilidades     String     @db.Text
+  desenvolvimento String     @db.Text
+  estrategia      String     @db.Text
+  observacoes     String     @db.Text
+  duracaoAula     String
+  nomeArquivo     String
+  usuarioId       Int
+  usuario         Usuario    @relation(fields: [usuarioId], references: [id])
+  disciplinaId    Int
+  disciplina      Disciplina @relation(fields: [disciplinaId], references: [id])
+  createdAt       DateTime   @default(now())
+}

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário de Planejamento Pedagógico</title>
+    <script>
+        // Função para carregar as habilidades com base na disciplina selecionada
+        function carregarHabilidades() {
+            var disciplina = document.getElementById("disciplina").value;
+            fetch(`/get-habilidades?disciplina=` + disciplina)
+                .then(response => response.json())
+                .then(data => {
+                    var habilidadesSelect = document.getElementById("habilidades");
+                    habilidadesSelect.innerHTML = "";  // Limpa as opções anteriores
+
+                    data.habilidades.forEach(function(habilidade) {
+                        var option = document.createElement("option");
+                        option.value = habilidade;
+                        option.text = habilidade;
+                        habilidadesSelect.appendChild(option);
+                    });
+                });
+        }
+
+        // Função para adicionar as habilidades selecionadas na caixa de exibição
+        function adicionarHabilidades() {
+            var habilidadesSelect = document.getElementById("habilidades");
+            var selectedHabilidades = document.getElementById("habilidadesSelecionadas");
+
+            // Adicionar habilidades selecionadas ao textarea
+            for (var i = 0; i < habilidadesSelect.selectedOptions.length; i++) {
+                var habilidade = habilidadesSelect.selectedOptions[i].value;
+                var habilidadesJaSelecionadas = selectedHabilidades.value.split("\n");
+
+                if (!habilidadesJaSelecionadas.includes(habilidade)) {
+                    selectedHabilidades.value += habilidade + "\n";
+                }
+            }
+        }
+        window.onload = carregarHabilidades;
+    </script>
+</head>
+<body>
+    <h1>Formulário de Planejamento Pedagógico</h1>
+    <form method="POST" action="/create-plan" onsubmit="adicionarHabilidades()">
+        <label for="unidade">Unidade:</label>
+        <select id="unidade" name="unidade">
+            <option value="SESI Araripina">SESI Araripina</option>
+            <option value="SESI Belo Jardim">SESI Belo Jardim</option>
+            <option value="SESI Cabo">SESI Cabo</option>
+            <option value="SESI Camaragibe">SESI Camaragibe</option>
+        </select><br><br>
+
+        <label for="professor">Professor:</label>
+        <input type="text" id="professor" name="professor"><br><br>
+
+        <label for="serie">Série:</label>
+        <select id="serie" name="serie">
+            <option value="1° ensc Fund anos iniciais">1° Ensc Fund anos iniciais</option>
+            <option value="2° ensc Fund anos iniciais">2° Ensc Fund anos iniciais</option>
+            <option value="3° ensc Fund anos iniciais">3° Ensc Fund anos iniciais</option>
+            <option value="4° ensc Fund anos iniciais">4° Ensc Fund anos iniciais</option>
+            <option value="5° ensc Fund anos iniciais">5° Ensc Fund anos iniciais</option>
+            <option value="6° ensc Fund anos finais">6° Ensc Fund anos finais</option>
+            <option value="7° ensc Fund anos finais">7° Ensc Fund anos finais</option>
+            <option value="8° ensc Fund anos finais">8° Ensc Fund anos finais</option>
+            <option value="9° ensc Fund anos finais">9° Ensc Fund anos finais</option>
+            <option value="1° ensc medio">1° Ensc médio</option>
+            <option value="2° ensc medio">2° Ensc médio</option>
+            <option value="3° ensc medio">3° Ensc médio</option>
+            <option value="eja">EJA</option>
+        </select><br><br>
+
+        <label for="capitulo">Capítulo:</label>
+        <select id="capitulo" name="capitulo">
+            <option value="I">I</option>
+            <option value="II">II</option>
+            <option value="III">III</option>
+            <option value="IV">IV</option>
+        </select><br><br>
+
+        <label for="bimestre">Bimestre:</label>
+        <select id="bimestre" name="bimestre">
+            <option value="I">I</option>
+            <option value="II">II</option>
+            <option value="III">III</option>
+            <option value="IV">IV</option>
+        </select><br><br>
+
+        <label for="duracao_aula">Duração da Aula:</label>
+        <select id="duracao_aula" name="duracao_aula">
+            <option value="50 minutos">50 minutos</option>
+            <option value="100 minutos">100 minutos</option>
+            <option value="150 minutos">150 minutos</option>
+            <option value="200 minutos">200 minutos</option>
+        </select><br><br>
+
+        <label for="periodo">Período:</label>
+        <input type="date" id="periodo" name="periodo"><br><br>
+
+        <label for="a">Até:</label>
+        <input type="date" id="a" name="a"><br><br>
+
+
+
+        <label for="disciplina">Área ou Disciplina:</label>
+        <select id="disciplina" name="disciplina" onchange="carregarHabilidades()">
+            {% for disciplina in disciplinas %}
+            <option value="{{ disciplina }}">{{ disciplina }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label for="habilidades">Habilidades:</label>
+        <select id="habilidades" multiple style="width: 1200px;">
+            <!-- As habilidades serão carregadas aqui dinamicamente -->
+        </select><br><br>
+
+        <button type="button" onclick="adicionarHabilidades()">Adicionar Habilidades</button><br><br>
+
+<div>
+        <label for="habilidadesSelecionadas">Habilidades Selecionadas:</label>
+</div>
+        <textarea id="habilidadesSelecionadas" name="habilidades" rows="5" cols="50" readonly></textarea><br><br>
+
+
+<div>
+        <label for="desenvolvimento">Desenvolvimento da Aula:</label>
+</div>
+        <textarea id="desenvolvimento" name="desenvolvimento" rows="4" cols="50"></textarea><br><br>
+
+
+<div>
+        <label for="estrategia">Estratégias e Evidências de Aprendizagem:</label>
+</div>
+        <textarea id="estrategia" name="estrategia" rows="4" cols="50"></textarea><br><br>
+
+<div>
+        <label for="observacoes">Observações:</label>
+</div>
+        <textarea id="observacoes" name="observacoes" rows="4" cols="50"></textarea><br><br>
+
+        <label for="nome_arquivo">Nome do Arquivo:</label>
+        <input type="text" id="nome_arquivo" name="nome_arquivo"><br><br>
+
+        <button type="submit">Salvar Plano de Aula</button>
+    </form>
+</body>
+</html>
+
+
+
+
+
