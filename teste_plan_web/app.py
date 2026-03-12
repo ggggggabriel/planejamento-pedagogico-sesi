@@ -1,42 +1,45 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file
+from flask import Flask, render_template, request, send_file
 from docx import Document
+from werkzeug.utils import secure_filename
 import pandas as pd
+import io
 import os
+import sys
 
 app = Flask(__name__)
 
-# Caminho do arquivo Excel
 EXCEL_FILE = 'HABILIDADES FUND.xlsx'
 
-# Carregar dados do Excel
-df = pd.read_excel(EXCEL_FILE)
-disciplinas = df.columns.tolist()
+try:
+    df = pd.read_excel(EXCEL_FILE)
+    disciplinas = df.columns.tolist()
+except FileNotFoundError:
+    print(f"Erro: arquivo '{EXCEL_FILE}' não encontrado.")
+    sys.exit(1)
 
 @app.route('/')
 def home():
-    return render_template('index.html')  # Página inicial
+    return render_template('index.html')
 
 @app.route('/create-plan', methods=['GET', 'POST'])
 def create_plan():
     if request.method == 'POST':
-        # Capturar os dados do formulário
-        unidade = request.form['unidade']
-        professor = request.form['professor']
-        serie=request.form['serie']
-        bimestre = request.form['bimestre']
-        periodo = request.form['periodo']
-        a = request.form['a']
-        capitulo = request.form['capitulo']
-        disciplina = request.form['disciplina']
-        habilidades = request.form.getlist('habilidades')
-        desenvolvimento = request.form['desenvolvimento']
-        estrategia = request.form['estrategia']
-        observacoes = request.form['observacoes']
-        duracao_aula = request.form['duracao_aula']
-        nome_arquivo = request.form['nome_arquivo']
+        unidade = request.form.get('unidade', '')
+        professor = request.form.get('professor', '')
+        serie = request.form.get('serie', '')
+        bimestre = request.form.get('bimestre', '')
+        periodo = request.form.get('periodo', '')
+        a = request.form.get('a', '')
+        capitulo = request.form.get('capitulo', '')
+        disciplina = request.form.get('disciplina', '')
+        habilidades = request.form.get('habilidades', '')
+        desenvolvimento = request.form.get('desenvolvimento', '')
+        estrategia = request.form.get('estrategia', '')
+        observacoes = request.form.get('observacoes', '')
+        duracao_aula = request.form.get('duracao_aula', '')
+        nome_arquivo = secure_filename(request.form.get('nome_arquivo', 'plano')) or 'plano'
 
-        # Inserir dados no modelo Word
-        caminho_arquivo = inserir_texto_no_modelo({
+        buffer = inserir_texto_no_modelo({
             'Unidade': unidade,
             'Professor': professor,
             'Série': serie,
@@ -45,16 +48,20 @@ def create_plan():
             'Período Fim': a,
             'Capítulo': capitulo,
             'Área ou Disciplina': disciplina,
-            'Habilidades': '\n'.join(habilidades),
+            'Habilidades': habilidades,
             'Desenvolvimento da Aula': desenvolvimento,
             'Estratégia': estrategia,
             'Observações': observacoes,
             'Duração da Aula': duracao_aula
-        }, 'static/docx/Folha do Planejamento Pedagógico.docx', 'static/docx/', nome_arquivo)
+        }, 'static/docx/Folha do Planejamento Pedagógico.docx')
 
-        # Verificar se o arquivo foi gerado corretamente
-        if caminho_arquivo:
-            return send_file(caminho_arquivo, as_attachment=True, download_name=f"{nome_arquivo}.docx")
+        if buffer:
+            return send_file(
+                buffer,
+                as_attachment=True,
+                download_name=f"{nome_arquivo}.docx",
+                mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
         else:
             return "Erro ao gerar o arquivo", 500
 
@@ -68,11 +75,8 @@ def get_habilidades():
         return {'habilidades': habilidades}
     return {'habilidades': []}
 
-def inserir_texto_no_modelo(dados, modelo_path, pasta_salvar, nome_arquivo):
+def inserir_texto_no_modelo(dados, modelo_path):
     try:
-        if not os.path.exists(pasta_salvar):
-            os.makedirs(pasta_salvar)
-
         doc = Document(modelo_path)
 
         table = doc.add_table(rows=0, cols=2)
@@ -84,21 +88,13 @@ def inserir_texto_no_modelo(dados, modelo_path, pasta_salvar, nome_arquivo):
             label_run.bold = True
             row.cells[1].paragraphs[0].add_run(str(valor))
 
-        caminho_arquivo = os.path.join(pasta_salvar, f'{nome_arquivo}.docx')
-        doc.save(caminho_arquivo)
-        return caminho_arquivo
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+        return buffer
     except Exception as e:
         print(f"Erro ao inserir texto no modelo: {e}")
         return None
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
-
-
-
-

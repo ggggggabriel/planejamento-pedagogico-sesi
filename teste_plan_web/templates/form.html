@@ -42,7 +42,7 @@
 </head>
 <body>
     <h1>Formulário de Planejamento Pedagógico</h1>
-    <form method="POST" action="/create-plan">
+    <form method="POST" action="/create-plan" onsubmit="adicionarHabilidades()">
         <label for="unidade">Unidade:</label>
         <select id="unidade" name="unidade">
             <option value="SESI Araripina">SESI Araripina</option>
@@ -98,7 +98,7 @@
         <label for="periodo">Período:</label>
         <input type="date" id="periodo" name="periodo"><br><br>
 
-        <label for="a">a:</label>
+        <label for="a">Até:</label>
         <input type="date" id="a" name="a"><br><br>
 
 
